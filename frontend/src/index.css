@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+:root {
+  --bg-deep-space: #020611;
+  --bg-secondary: #06101D;
+  --bg-card: #0A1624;
+  --bg-elevated: #0E1C2D;
+  --border-space: #183047;
+  --accent-sky: #38BDF8;
+  --accent-cyan: #22D3EE;
+  --status-success: #34D399;
+  --status-warning: #FBBF24;
+  --status-critical: #F43F5E;
+  --text-primary: #E8F3FF;
+  --text-secondary: #91A8BE;
+  --text-muted: #587088;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-deep-space);
+  color: var(--text-primary);
+  font-family: 'Inter', 'Space Grotesk', sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-data {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.font-heading {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+/* Subtle Deep Space Stars Background */
+.space-bg {
+  background-color: #020611;
+  background-image: 
+    radial-gradient(1px 1px at 20px 30px, rgba(232, 243, 255, 0.25), rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 150px 120px, rgba(56, 189, 248, 0.3), rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 280px 80px, rgba(232, 243, 255, 0.4), rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 400px 240px, rgba(34, 211, 238, 0.25), rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 520px 310px, rgba(232, 243, 255, 0.2), rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 700px 180px, rgba(56, 189, 248, 0.35), rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 850px 390px, rgba(232, 243, 255, 0.2), rgba(0,0,0,0));
+  background-repeat: repeat;
+  background-size: 900px 500px;
+}
+
+/* Thin Grid Lines */
+.telemetry-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(24, 48, 71, 0.3) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(24, 48, 71, 0.3) 1px, transparent 1px);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #020611;
+}
+::-webkit-scrollbar-thumb {
+  background: #183047;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #38BDF8;
+}
+
+/* Leaflet Dark Theme Overrides */
+.leaflet-container {
+  background: #06101D !important;
+  font-family: 'JetBrains Mono', monospace !important;
+}
+.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+  background: #0A1624 !important;
+  color: #E8F3FF !important;
+  border: 1px solid #183047 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Cyan Glowing Status Marker */
+@keyframes pulse-cyan {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(34, 211, 238, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0);
+  }
+}
+
+.status-pulse-cyan {
+  animation: pulse-cyan 2s infinite;
+}
