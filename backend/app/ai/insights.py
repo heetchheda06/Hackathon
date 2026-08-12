@@ -1,5 +1,56 @@
+import os
+import json
+import urllib.request
 from typing import Dict, Any, List, Tuple
 from app.models.schemas import AIInsight, ChangeStats, EarthLensChangeIndex
+
+def call_gemini_api(prompt: str, system_prompt: str = "") -> str:
+    """
+    Calls Google Gemini API if GEMINI_API_KEY is available in the environment.
+    Falls back gracefully if key is not configured or request fails.
+    """
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    if not gemini_key:
+        return ""
+    
+    # Try standard Gemini models in order
+    models = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]
+    for model in models:
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={gemini_key}"
+            payload = {
+                "contents": [
+                    {
+                        "role": "user",
+                        "parts": [{"text": (f"System Context: {system_prompt}\n\nUser Query: {prompt}" if system_prompt else prompt)}]
+                    }
+                ],
+                "generationConfig": {
+                    "temperature": 0.2,
+                    "maxOutputTokens": 800
+                }
+            }
+            data = json.dumps(payload).encode("utf-8")
+            req = urllib.request.Request(
+                url,
+                data=data,
+                headers={"Content-Type": "application/json"},
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=6) as response:
+                result = json.loads(response.read().decode("utf-8"))
+                candidates = result.get("candidates", [])
+                if candidates:
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    if parts:
+                        text = parts[0].get("text", "").strip()
+                        if text:
+                            return text
+        except Exception as e:
+            # Silently pass to fallback
+            continue
+    return ""
+
 
 def generate_ai_insight(
     city_name: str,
@@ -59,13 +110,13 @@ def generate_ai_insight(
 def answer_ask_earthlens(question: str, analysis_data: Dict[str, Any]) -> Tuple[str, List[str]]:
     """
     Answers natural language queries in 'Ask EarthLens' based strictly on active satellite analysis data.
+    Uses Gemini LLM if configured, otherwise uses grounded analytical fallback.
     """
     q = question.lower().strip()
     
     city = analysis_data.get("city_name", "the selected Indian city")
     stats = analysis_data.get("stats", {})
     change_idx = analysis_data.get("change_index", {})
-    insight = analysis_data.get("ai_insight", {})
     
     urban_pct = stats.get("urban_change_pct", 14.7)
     veg_pct = stats.get("vegetation_change_pct", -8.4)
@@ -83,6 +134,24 @@ def answer_ask_earthlens(question: str, analysis_data: Dict[str, Any]) -> Tuple[
         "Explain the methodology used."
     ]
 
+    # Attempt live Gemini response if available
+    gemini_prompt = (
+        f"You are EarthLens AI, a satellite intelligence telemetry assistant for Indian cities. "
+        f"Answer the user query based ONLY on the following observed data:\n"
+        f"City: {city}\n"
+        f"Urban Expansion: {urban_pct:+.1f}%\n"
+        f"Vegetation (NDVI) Change: {veg_pct:+.1f}%\n"
+        f"Water Surface (NDWI) Change: {water_pct:+.1f}%\n"
+        f"Infrastructure Growth: {infra_pct:+.1f}%\n"
+        f"Total Affected Area: {area_km2:.2f} km²\n"
+        f"EarthLens Change Index: {score}/100 ({rating} Impact)\n"
+        f"Keep response concise, aerospace mission-control tone, 2-4 sentences max. Never fabricate data."
+    )
+    llm_resp = call_gemini_api(prompt=question, system_prompt=gemini_prompt)
+    if llm_resp:
+        return llm_resp, suggested
+
+    # Grounded rule-based fallback
     if "what changed" in q or "summary" in q or "explain" in q:
         ans = (
             f"In {city}, our multi-spectral change detection pipeline identified {urban_pct:+.1f}% urban expansion, "
